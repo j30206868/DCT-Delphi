@@ -36,20 +36,38 @@ begin
     result := cos( ( pi*(2*y+1)*v )/(2.0*yN) );
 end;
 
-procedure dctTypeIIBlockCalc(sX, sY, xN, yN: Integer; tarBmp, bufBmp: TBitmap ; var dctMatrix: TDouble2DArray ; bpp: Integer);
+procedure dctMatrixToBmp(dctMatrix: TDouble2DArray; bmp: TBitmap; bpp: Integer);
+var
+    x, y, xIdx, pixelV: Integer;
+    SL: PByteArray;
+begin
+    for y:=0 to bmp.Height-1 do
+    begin
+        SL := bmp.ScanLine[y];
+
+        for x:=0 to bmp.Width-1 do
+        begin
+            xIdx := x * bpp;
+            pixelV := pixelGuard(Round(dctMatrix[x][y]));
+            SL[xIdx]     := pixelV;
+            SL[xIdx + 1] := pixelV;
+            SL[xIdx + 2] := pixelV;
+        end;
+    end;
+end;
+
+procedure dctTypeIIBlockCalc(sX, sY, xN, yN: Integer; tarBmp: TBitmap ; var dctMatrix: TDouble2DArray ; bpp: Integer);
 var
     pi: Double;
     u, v, x, y: Integer;
-    bufPV, tarPV, uIdx, xIdx: Integer;
+    tarPV, uIdx, xIdx: Integer;
     sum: Double;
-    bufSL, tarSL: PByteArray;
+    tarSL: PByteArray;
 begin
     pi := 3.14159;
 
     for v:=0 to yN-1 do
     begin
-        bufSL := bufBmp.ScanLine[v + sY];
-
         for u:=0 to xN-1 do
         begin
             sum := 0;
@@ -60,8 +78,6 @@ begin
 
                 for x:=0 to xN-1 do
                 begin
-                    //convert value range from 0~255 to -128~127
-                    // so -128
                     xIdx := (x + sX) * bpp;
                     tarPV := tarSL[xIdx];
                     sum := sum + tarPV * dctCosX(x, u, xN, pi) * dctCosY(y, v, yN, pi);
@@ -69,15 +85,6 @@ begin
             end;
 
             dctMatrix[u + sX][v + sY] := dctConst(u, xN) * dctConst(v, yN) * sum;
-            //convert range back
-            // + 128
-            bufPV := Round( dctMatrix[u + sX][v + sY] );
-            bufPV := pixelGuard(bufPV);
-            uIdx := (u + sX) * bpp;
-
-            bufSL[uIdx] := bufPV;
-            bufSL[uIdx+1] := bufPV;
-            bufSL[uIdx+2] := bufPV;
         end;
     end;
 end;
@@ -119,72 +126,57 @@ begin
     end;
 end;
 
-procedure dctTypeII(tarBmp, bufBmp: TBitmap ; dctMatrix: TDouble2DArray ; bpp: Integer);
+procedure dctTypeII(tarBmp: TBitmap ; dctMatrix: TDouble2DArray ; xN, yN, bpp: Integer);
 var
-    xS, xE, yS, yE: Integer;
+    xS, yS: Integer;
     wBorder, hBorder: Integer;
 begin
-    Xstep := N;
-    Ystep := N;
-                                  
-    wBorder := Round((tarBmp.Width mod Xstep) / 2.0);
-    hBorder := Round((tarBmp.Height mod Ystep) / 2.0);
+    wBorder := Round((tarBmp.Width mod xN) / 2.0);
+    hBorder := Round((tarBmp.Height mod yN) / 2.0);
 
     xS := wBorder;
-    xE := xS + Xstep - 1; //起使那點也要算 所以減1
 
-    while (xE <= 220) do
+    while (xS < tarBmp.Width-xN) do
     begin
         yS := hBorder;
-        yE := yS + Ystep - 1;
 
-        while (yE <= 220) do
+        while (yS < tarBmp.Height-yN) do
         begin
-            dctTypeIIBlockCalc(xS, yS, Xstep, Ystep, tarBmp, bufBmp, dctMatrix, bpp);
+            dctTypeIIBlockCalc(xS, yS, xN, yN, tarBmp, dctMatrix, bpp);
 
             //繼續此column的下一個block
-            yS := yS + Ystep;
-            yE := yS + Ystep - 1; //起使那點也要算 所以減1
+            yS := yS + yN;
         end;
 
         //繼續此row的下一個block
-        xS := xS + Xstep;
-        xE := xS + Xstep - 1; //起使那點也要算 所以減1
+        xS := xS + xN;
     end;
 end;
 
-procedure idctTypeII(tarBmp, bufBmp: TBitmap ; dctMatrix: TDouble2DArray ; bpp: Integer);
+procedure idctTypeII(tarBmp: TBitmap ; dctMatrix: TDouble2DArray ; xN, yN, bpp: Integer);
 var
-    Xstep, Ystep : Integer;
-    xS, xE, yS, yE: Integer;
+    xS, yS: Integer;
     wBorder, hBorder: Integer;
 begin
-    Xstep := N;
-    Ystep := N;
-
-    wBorder := Round((tarBmp.Width mod Xstep) / 2.0);
-    hBorder := Round((tarBmp.Height mod Ystep) / 2.0);
+    wBorder := Round((tarBmp.Width mod xN) / 2.0);
+    hBorder := Round((tarBmp.Height mod yN) / 2.0);
 
     xS := wBorder;
-    xE := xS + Xstep - 1; //起使那點也要算 所以減1
 
-    while (xE <= 220) do
+    while (xS < tarBmp.Width-xN) do
     begin
         yS := hBorder;
-        yE := yS + Ystep - 1;
 
-        while (yE <= 220) do
+        while (yS < tarBmp.Height-yN) do
         begin
-            idctTypeIIBlockCalc(xS, yS, Xstep, Ystep, bufBmp, dctMatrix, bpp);
+            idctTypeIIBlockCalc(xS, yS, xN, yN, tarBmp, dctMatrix, bpp);
 
             //繼續此column的下一個block
-            yS := yS + Ystep;
-            yE := yS + Ystep - 1; //起使那點也要算 所以減1
+            yS := yS + yN;
         end;
 
         //繼續此row的下一個block
-        xS := xS + Xstep;
-        xE := xS + Xstep - 1; //起使那點也要算 所以減1
+        xS := xS + xN;
     end;
 end;
 

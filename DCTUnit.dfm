@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 267
-  Top = 109
+  Left = 208
+  Top = 131
   Width = 1310
   Height = 602
   Caption = 'Form1'
@@ -10,6 +10,7 @@ object Form1: TForm1
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  Menu = Menu1
   OldCreateOrder = False
   OnActivate = FormActivate
   PixelsPerInch = 96
@@ -44,33 +45,23 @@ object Form1: TForm1
     TabOrder = 1
     OnClick = btn2Click
   end
-  object DCT: TButton
-    Left = 432
-    Top = 8
-    Width = 73
-    Height = 33
-    Caption = 'DCT'
-    TabOrder = 2
-    OnClick = DCTClick
-  end
-  object idct: TButton
-    Left = 512
-    Top = 8
-    Width = 65
-    Height = 33
-    Caption = 'IDCT'
-    TabOrder = 3
-    OnClick = idctClick
-  end
-  object mm1: TMemo
-    Left = 400
-    Top = 120
-    Width = 537
-    Height = 385
-    TabOrder = 4
-  end
   object od1: TOpenDialog
     Left = 56
     Top = 16
+  end
+  object Menu1: TMainMenu
+    Left = 296
+    Top = 32
+    object mniFunc1: TMenuItem
+      Caption = 'Func'
+      object mniDCT1: TMenuItem
+        Caption = 'DCT'
+        OnClick = mniDCT1Click
+      end
+      object mniIDCT1: TMenuItem
+        Caption = 'IDCT'
+        OnClick = mniIDCT1Click
+      end
+    end
   end
 end

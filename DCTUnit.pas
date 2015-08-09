@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls;
+  Dialogs, StdCtrls, ExtCtrls, Menus;
 
 type
   TDouble2DArray = array of array of Double;
@@ -16,14 +16,17 @@ type
     btn1: TButton;
     img2: TImage;
     btn2: TButton;
-    DCT: TButton;
-    idct: TButton;
-    mm1: TMemo;
+    Menu1: TMainMenu;
+    mniFunc1: TMenuItem;
+    mniDCT1: TMenuItem;
+    mniIDCT1: TMenuItem;
     procedure btn1Click(Sender: TObject);
     procedure btn2Click(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure DCTClick(Sender: TObject);
     procedure idctClick(Sender: TObject);
+    procedure mniDCT1Click(Sender: TObject);
+    procedure mniIDCT1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -87,22 +90,9 @@ begin
     cloneImgSetting(img1Buf, img1);
     cloneImgSetting(img2Buf, img2);
 
-    for j:=0 to 10 do
-    begin
-        ImgSL := img1.Picture.Bitmap.ScanLine[j];
-        str := '';
-        for i:=0 to 10 do
-        begin
-            str := str + IntToStr(ImgSL[i*3]) + ' ';
-        end;
-        Form1.mm1.Lines.Add(str);
-    end;
-    Form1.mm1.Lines.Add(' ');       
-    
+    //初使化dctMatrix1, 2的長度
     SetLength(dctMatrix1, img1Buf.Picture.Bitmap.Width);
-
     SetLength(dctMatrix2, img2Buf.Picture.Bitmap.Width);
-    
     for i:=0 to img1Buf.Picture.Bitmap.Width-1 do
     begin
         SetLength(dctMatrix1[i], img1Buf.Picture.Bitmap.Height);
@@ -111,9 +101,15 @@ begin
     begin
         SetLength(dctMatrix2[i], img2Buf.Picture.Bitmap.Height);
     end;
+    //
 
-    dctTypeII(img1.Picture.Bitmap, img1Buf.Picture.Bitmap, dctMatrix1, 3);
-    dctTypeII(img2.Picture.Bitmap, img2Buf.Picture.Bitmap, dctMatrix2, 3);
+    //DCT轉換
+    dctTypeII(img1.Picture.Bitmap, dctMatrix1, N, N, 3);
+    dctTypeII(img2.Picture.Bitmap, dctMatrix2, N, N, 3);
+
+    //把DCT矩陣 的值copy到buffer img(方便顯示出來看)
+    dctMatrixToBmp(dctMatrix1, img1Buf.Picture.Bitmap,3);
+    dctMatrixToBmp(dctMatrix2, img2Buf.Picture.Bitmap,3);
 
     img1.Picture.Bitmap.Assign(img1Buf.Picture.Bitmap);
     img2.Picture.Bitmap.Assign(img2Buf.Picture.Bitmap);
@@ -125,28 +121,58 @@ var
     i, j: Integer;
     ImgSL: PByteArray;
     str: String;
+begin
+    idctTypeII(img1.Picture.Bitmap, dctMatrix1, N, N, 3);
+    idctTypeII(img2.Picture.Bitmap, dctMatrix2, N, N, 3);
+    img1.Refresh;
+    img2.Refresh;
+end;
+
+procedure TForm1.mniDCT1Click(Sender: TObject);
+var
     img1Buf, img2Buf: TImage;
+    i, j : Integer;
+    str: String;
+    ImgSL: PByteArray;
 begin
     cloneImgSetting(img1Buf, img1);
     cloneImgSetting(img2Buf, img2);
 
-    idctTypeII(img1.Picture.Bitmap, img1Buf.Picture.Bitmap, dctMatrix1, 3);
-    idctTypeII(img2.Picture.Bitmap, img2Buf.Picture.Bitmap, dctMatrix2, 3);
+    //初使化dctMatrix1, 2的長度
+    SetLength(dctMatrix1, img1Buf.Picture.Bitmap.Width);
+    SetLength(dctMatrix2, img2Buf.Picture.Bitmap.Width);
+    for i:=0 to img1Buf.Picture.Bitmap.Width-1 do
+    begin
+        SetLength(dctMatrix1[i], img1Buf.Picture.Bitmap.Height);
+    end;
+    for i:=0 to img2Buf.Picture.Bitmap.Width-1 do
+    begin
+        SetLength(dctMatrix2[i], img2Buf.Picture.Bitmap.Height);
+    end;
+    //
+
+    //DCT轉換
+    dctTypeII(img1.Picture.Bitmap, dctMatrix1, N, N, 3);
+    dctTypeII(img2.Picture.Bitmap, dctMatrix2, N, N, 3);
+
+    //把DCT矩陣 的值copy到buffer img(方便顯示出來看)
+    dctMatrixToBmp(dctMatrix1, img1Buf.Picture.Bitmap,3);
+    dctMatrixToBmp(dctMatrix2, img2Buf.Picture.Bitmap,3);
 
     img1.Picture.Bitmap.Assign(img1Buf.Picture.Bitmap);
     img2.Picture.Bitmap.Assign(img2Buf.Picture.Bitmap);
+end;
 
-    for j:=0 to 10 do
-    begin
-        ImgSL := img1.Picture.Bitmap.ScanLine[j];
-        str := '';
-        for i:=0 to 10 do
-        begin
-            str := str + IntToStr(ImgSL[i*3]) + ' ';
-        end;
-        Form1.mm1.Lines.Add(str);
-    end;
-    Form1.mm1.Lines.Add(' ');
+procedure TForm1.mniIDCT1Click(Sender: TObject);
+var
+    i, j: Integer;
+    ImgSL: PByteArray;
+    str: String;
+begin
+    idctTypeII(img1.Picture.Bitmap, dctMatrix1, N, N, 3);
+    idctTypeII(img2.Picture.Bitmap, dctMatrix2, N, N, 3);
+    img1.Refresh;
+    img2.Refresh;
 end;
 
 end.
